@@ -1,14 +1,24 @@
+import { User, UserFormValues } from './../app/models/user';
 import { store } from './../app/stores/store';
 import { Activity } from './../app/models/activity';
 import axios, { AxiosError, AxiosResponse } from 'axios';
 import { toast } from 'react-toastify';
 import { history } from '..';
+import { request } from 'http';
 
 const sleep = (delay: number) => {
     return new Promise((resolve) => {
         setTimeout(resolve, delay)
     })
 }
+
+axios.defaults.baseURL = 'http://localhost:5000/api';
+
+axios.interceptors.request.use(config => {
+    const token = store.commonStore.token;
+    if (token) config.headers.Authorization = `Bearer ${token}`
+    return config;
+})
 
 axios.interceptors.response.use(async response => {
     await sleep(1000);
@@ -49,15 +59,13 @@ axios.interceptors.response.use(async response => {
     return Promise.reject(error);
 })
 
-axios.defaults.baseURL = 'http://localhost:5000/api';
-
 const responseBody = <T> (response: AxiosResponse<T>) => response.data;
 
 const requests = {
     get: <T> (url: string) => axios.get<T>(url).then(responseBody),
-    post: <T> (url: string, body: {}) => axios.get<T>(url, body).then(responseBody),
-    put: <T> (url: string, body: {}) => axios.get<T>(url, body).then(responseBody),
-    del: <T> (url: string) => axios.get<T>(url).then(responseBody)
+    post: <T> (url: string, body: {}) => axios.post<T>(url, body).then(responseBody),
+    put: <T> (url: string, body: {}) => axios.put<T>(url, body).then(responseBody),
+    del: <T> (url: string) => axios.delete<T>(url).then(responseBody)
 }
 
 const Activities = {
@@ -68,8 +76,15 @@ const Activities = {
     delete: (id: string) => axios.delete<void>(`/activities/${id}`)
 }
 
+const Account = {
+    current: () => requests.get<User>('/account'),
+    login: (user: UserFormValues) => requests.post<User>('/account/login', user),
+    register: (user: UserFormValues) => requests.post<User>('/account/register', user)
+}
+
 const agent = {
-    Activities
+    Activities,
+    Account
 }
 
 export default agent;

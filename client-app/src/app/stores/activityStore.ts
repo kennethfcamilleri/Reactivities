@@ -4,6 +4,7 @@ import agent from '../../api/agent';
 import format from 'date-fns/format';
 import { store } from './store';
 import { Profile } from '../models/profile';
+import ActivityListItemAttendee from '../../features/activities/dashboard/ActivityListItemAttendee';
 
 export default class ActivityStore {
     activityRegistry = new Map<string, Activity>();
@@ -181,5 +182,16 @@ export default class ActivityStore {
 
     clearSelectedActivity = () => {
         this.selectedActivity = undefined;
+    }
+
+    updateAttendeeFollowing = (username: string) => {
+        this.activityRegistry.forEach(activity => {
+            activity.attendees.forEach(attendee => {
+                if (attendee.username === username) {
+                    attendee.following ? attendee.followersCount-- : attendee.followersCount++;
+                    attendee.following = !attendee.following;
+                }
+            })
+        })
     }
 }
